@@ -8,6 +8,8 @@ Two live design proposals are available:
 - **Original layout:** preserves the title, Sunday-first grid, right-hand reading goals, and bottom name fields; stacks all three languages.
 - **More room for languages:** moves goals beneath the grid into three grade-group columns and gives the calendar the full page width.
 
-Add or update notes by entering their day and translations. Notes are stored separately for each month and year; school holidays are not inferred. Reading goals are editable. Settings save locally in the current browser. Use **Print / Save PDF** for a landscape calendar; choose landscape in your print dialog if your browser ignores the page setting. Bird emoji are placeholders for school-provided mascot artwork. Chinese translations should receive school review before distribution.
+Add a note for one day or choose a start and end day for a multi-day event. Enter the note in English, Spanish, or Simplified Chinese and leave the other fields blank; the app fills them when you leave the field. Common school phrases use a built-in phrasebook. Other text uses the browser's on-device Translator API when available; unsupported browsers ask the user to enter the remaining translations. Existing text is never overwritten, and translations should be reviewed before distribution.
+
+Notes are stored separately for each month and year; school holidays are not inferred. Reading goals are editable. Settings save locally in the current browser. Use **Print / Save PDF** for a landscape calendar; choose landscape in your print dialog if your browser ignores the page setting. Bird emoji are placeholders for school-provided mascot artwork.
 
 Run the date-placement tests with `node --test calendar.test.mjs`. There are no third-party dependencies, build steps, external services, or credentials.
