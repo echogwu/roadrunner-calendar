@@ -109,13 +109,16 @@ function positionEventBars(events, weeks) {
       if (!startCell || !endCell) return;
       let lane=0; while (occupied[segment.weekIndex][lane]>=segment.start) lane++;
       occupied[segment.weekIndex][lane]=segment.end;
-      const startRect=startCell.getBoundingClientRect(); const endRect=endCell.getBoundingClientRect();
+      const startRect=startCell.getBoundingClientRect();
       const bar=document.createElement('div'); bar.className='event-bar';
       const column=weeks[segment.weekIndex].indexOf(segment.start);
       const span=segment.end-segment.start+1;
       bar.style.left=`calc(${column * 100 / 7}% + 8px)`;
       bar.style.width=`calc(${span * 100 / 7}% - 16px)`;
-      bar.style.top=`${startRect.top-wrapRect.top+startRect.height*.43+lane*35}px`;
+      bar.style.top=`${(startRect.top-wrapRect.top+startRect.height*.5)/wrapRect.height*100}%`;
+      bar.style.setProperty('--week-center',(segment.weekIndex+.5)/weeks.length);
+      bar.style.setProperty('--lane-offset',`${lane*35}px`);
+      bar.style.transform=`translateY(calc(-50% + ${lane*35}px))`;
       bar.innerHTML=`<span class="bar-line"></span><div class="event-bar-label">${lines(event.texts)}</div><span class="bar-arrow" aria-hidden="true"></span>`;
       layer.append(bar);
     });
