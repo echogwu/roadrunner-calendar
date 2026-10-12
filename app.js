@@ -115,7 +115,7 @@ function fitText(element, width, height, maximum = 16) {
   for (let i = 0; i < 12; i++) {
     const size = (low + high) / 2;
     element.style.fontSize = `${size}px`;
-    if (element.scrollWidth <= width + 1 && element.scrollHeight <= height + 1) low = size;
+    if (element.scrollWidth <= width && Math.max(element.scrollHeight,element.getBoundingClientRect().height) <= height - 3) low = size;
     else high = size;
   }
   element.style.fontSize = `${low}px`;
@@ -271,6 +271,29 @@ $('remove-mascot').addEventListener('click', () => {
   delete state.mascot; $('mascot-status').textContent = 'Mascot removed. Upload an image to add it again.'; render();
 });
 window.addEventListener('resize',()=>positionEventBars(monthEvents(),calendarWeeks(state.year,state.month)));
-window.addEventListener('beforeprint',()=>positionEventBars(monthEvents(),calendarWeeks(state.year,state.month)));
-window.addEventListener('afterprint',()=>positionEventBars(monthEvents(),calendarWeeks(state.year,state.month)));
+let printLayoutStyle;
+window.addEventListener('beforeprint',()=>{
+  // Apply the final page layout synchronously before measuring text, including
+  // browsers that dispatch beforeprint before activating print media styles.
+  if (!printLayoutStyle) {
+    const rules=[];
+    for (const sheet of document.styleSheets) {
+      try {
+        for (const rule of sheet.cssRules) {
+          if (rule.type===CSSRule.MEDIA_RULE && rule.conditionText==='print') {
+            rules.push(...Array.from(rule.cssRules,r=>r.cssText));
+          }
+        }
+      } catch {}
+    }
+    printLayoutStyle=document.createElement('style');
+    printLayoutStyle.textContent=rules.join('\n');
+    document.head.append(printLayoutStyle);
+  }
+  positionEventBars(monthEvents(),calendarWeeks(state.year,state.month));
+});
+window.addEventListener('afterprint',()=>{
+  printLayoutStyle?.remove(); printLayoutStyle=null;
+  positionEventBars(monthEvents(),calendarWeeks(state.year,state.month));
+});
 render();
