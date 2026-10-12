@@ -139,7 +139,7 @@ document.querySelectorAll('.goal-input').forEach(input=>{input.value=state.goals
 $('month').addEventListener('change',()=>{state.month=Number($('month').value);render();});
 $('year').addEventListener('input',()=>{if($('year').value!==''&&$('year').checkValidity()){state.year=Number($('year').value);render();}});
 $('design').addEventListener('change',()=>{state.design=$('design').value;render();});
-$('event-form').previousElementSibling.textContent='Choose one day or a date range. Enter a note in any language; translations fill automatically after a short pause. You can edit them manually.';
+$('event-form').previousElementSibling.textContent='Choose one day or a date range. Enter a note in any language.';
 const googleTranslatorLink = document.createElement('a');
 googleTranslatorLink.href = 'https://translate.google.com/?sl=auto&tl=zh-CN&op=translate';
 googleTranslatorLink.target = '_blank';
