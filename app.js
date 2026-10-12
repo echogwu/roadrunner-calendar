@@ -70,16 +70,27 @@ async function translate(text, source, target) {
   throw new Error('Browser translation unavailable');
 }
 
+const generatedTranslations = new Map();
+const translationRequests = new Map();
+let lastNoteSource = null;
+let translationTimer;
 async function fillTranslations(sourceInput) {
   const text=sourceInput.value.trim();
   if (!text) return;
   const source=sourceInput.dataset.language;
-  const targets=fieldIds.map(id=>$(id)).filter(input=>input!==sourceInput && !input.value.trim());
-  if (!targets.length) return;
+  const targets=fieldIds.map(id=>$(id)).filter(input=>input!==sourceInput && (!input.value.trim() || generatedTranslations.get(input.id)===input.value));
+  if (!targets.length) { $('translation-status').textContent='Manual translations kept. Clear a field to translate it again.'; return; }
   $('translation-status').textContent='Translating…';
   let completed=0;
-  await Promise.all(targets.map(async input=>{try {input.value=await translate(text,source,input.dataset.language); completed++;} catch {}}));
-  $('translation-status').textContent=completed===targets.length?'Translations added—please review them.':'Some translations need to be entered manually.';
+  await Promise.all(targets.map(async input=>{
+    const previous=input.value; const ticket=Symbol(); translationRequests.set(input.id,ticket);
+    try {
+      const result=await translate(text,source,input.dataset.language);
+      if (translationRequests.get(input.id)!==ticket || sourceInput.value.trim()!==text || input.value!==previous) return;
+      input.value=result; generatedTranslations.set(input.id,result); completed++;
+    } catch {}
+  }));
+  if (sourceInput.value.trim()===text) $('translation-status').textContent=completed===targets.length?'Translations added—edit any field to make corrections.':'Automatic translation is unavailable for some text in this browser. Try Translate in a browser with on-device translation, or enter the missing translations manually.';
 }
 
 function eventMarkup(events, day) {
@@ -128,11 +139,30 @@ document.querySelectorAll('.goal-input').forEach(input=>{input.value=state.goals
 $('month').addEventListener('change',()=>{state.month=Number($('month').value);render();});
 $('year').addEventListener('input',()=>{if($('year').value!==''&&$('year').checkValidity()){state.year=Number($('year').value);render();}});
 $('design').addEventListener('change',()=>{state.design=$('design').value;render();});
-fieldIds.forEach(id=>$(id).addEventListener('blur',()=>fillTranslations($(id))));
+const translateButton=document.createElement('button');
+$('event-form').previousElementSibling.textContent='Choose one day or a date range. Enter a note in any language; translations fill automatically after a short pause. You can edit them manually or use Translate to retry.';
+translateButton.type='button'; translateButton.id='translate-note'; translateButton.textContent='Translate';
+$('translation-status').before(translateButton);
+translateButton.addEventListener('click',async()=>{
+  clearTimeout(translationTimer);
+  const source=lastNoteSource?.value.trim()?lastNoteSource:fieldIds.map(id=>$(id)).find(input=>input.value.trim());
+  if (!source) { $('translation-status').textContent='Enter a note in any language first.'; return; }
+  translateButton.disabled=true;
+  try { await fillTranslations(source); } finally { translateButton.disabled=false; }
+});
+fieldIds.forEach(id=>{
+  $(id).addEventListener('input',()=>{
+    lastNoteSource=$(id); generatedTranslations.delete(id); translationRequests.delete(id);
+    clearTimeout(translationTimer);
+    translationTimer=setTimeout(()=>fillTranslations($(id)),700);
+  });
+  $(id).addEventListener('blur',()=>{clearTimeout(translationTimer);fillTranslations($(id));});
+});
 $('event-start').addEventListener('input',()=>{if(Number($('event-end').value)<Number($('event-start').value)) $('event-end').value=$('event-start').value;});
 $('event-form').addEventListener('submit',async e=>{
   e.preventDefault();
-  const source=fieldIds.map(id=>$(id)).find(input=>input.value.trim());
+  clearTimeout(translationTimer);
+  const source=lastNoteSource?.value.trim()?lastNoteSource:fieldIds.map(id=>$(id)).find(input=>input.value.trim());
   if (!source) {$('translation-status').textContent='Enter the note in at least one language.'; return;}
   await fillTranslations(source);
   const start=Number($('event-start').value); const end=Number($('event-end').value);
@@ -140,7 +170,7 @@ $('event-form').addEventListener('submit',async e=>{
   state.events[currentKey()]??=[];
   const events=monthEvents();
   events.push({id:`event-${Date.now()}`,start,end,texts:fieldIds.map(id=>$(id).value.trim())});
-  fieldIds.forEach(id=>$(id).value=''); $('translation-status').textContent='Note added.';
+  fieldIds.forEach(id=>$(id).value=''); generatedTranslations.clear(); translationRequests.clear(); lastNoteSource=null; $('translation-status').textContent='Note added.';
   render();
 });
 $('event-list').addEventListener('click',e=>{const button=e.target.closest('[data-remove]');if(button){state.events[currentKey()]=monthEvents().filter(event=>event.id!==button.dataset.remove);render();}});
