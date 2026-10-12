@@ -90,7 +90,7 @@ async function fillTranslations(sourceInput) {
       input.value=result; generatedTranslations.set(input.id,result); completed++;
     } catch {}
   }));
-  if (sourceInput.value.trim()===text) $('translation-status').textContent=completed===targets.length?'Translations added—edit any field to make corrections.':'Automatic translation is unavailable for some text in this browser. Try Translate in a browser with on-device translation, or enter the missing translations manually.';
+  if (sourceInput.value.trim()===text) $('translation-status').textContent=completed===targets.length?'Translations added—edit any field to make corrections.':'Automatic translation is unavailable for some text in this browser. Use Google Translator or enter the missing translations manually.';
 }
 
 function eventMarkup(events, day) {
@@ -139,10 +139,7 @@ document.querySelectorAll('.goal-input').forEach(input=>{input.value=state.goals
 $('month').addEventListener('change',()=>{state.month=Number($('month').value);render();});
 $('year').addEventListener('input',()=>{if($('year').value!==''&&$('year').checkValidity()){state.year=Number($('year').value);render();}});
 $('design').addEventListener('change',()=>{state.design=$('design').value;render();});
-const translateButton=document.createElement('button');
-$('event-form').previousElementSibling.textContent='Choose one day or a date range. Enter a note in any language; translations fill automatically after a short pause. You can edit them manually or use Translate to retry.';
-translateButton.type='button'; translateButton.id='translate-note'; translateButton.textContent='Translate';
-$('translation-status').before(translateButton);
+$('event-form').previousElementSibling.textContent='Choose one day or a date range. Enter a note in any language; translations fill automatically after a short pause. You can edit them manually.';
 const googleTranslatorLink = document.createElement('a');
 googleTranslatorLink.href = 'https://translate.google.com/?sl=auto&tl=zh-CN&op=translate';
 googleTranslatorLink.target = '_blank';
@@ -150,14 +147,7 @@ googleTranslatorLink.rel = 'noopener noreferrer';
 googleTranslatorLink.className = 'google-translator-button';
 googleTranslatorLink.textContent = 'Use Google Translator';
 googleTranslatorLink.setAttribute('aria-label', 'Use Google Translator (opens in a new tab)');
-translateButton.after(googleTranslatorLink);
-translateButton.addEventListener('click',async()=>{
-  clearTimeout(translationTimer);
-  const source=lastNoteSource?.value.trim()?lastNoteSource:fieldIds.map(id=>$(id)).find(input=>input.value.trim());
-  if (!source) { $('translation-status').textContent='Enter a note in any language first.'; return; }
-  translateButton.disabled=true;
-  try { await fillTranslations(source); } finally { translateButton.disabled=false; }
-});
+$('translation-status').before(googleTranslatorLink);
 fieldIds.forEach(id=>{
   $(id).addEventListener('input',()=>{
     lastNoteSource=$(id); generatedTranslations.delete(id); translationRequests.delete(id);
