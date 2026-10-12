@@ -12,6 +12,8 @@ Add a note for one day or choose a start and end day for a multi-day event. Mult
 
 Notes are stored separately for each month and year; school holidays are not inferred. Reading goals are editable. Settings save locally in the current browser. Use **Print / Save PDF** for a landscape calendar; choose landscape in your print dialog if your browser ignores the page setting.
 
+Printing uses landscape Letter paper and automatically divides the remaining page height among the month's four, five, or six calendar rows. Select Letter, Landscape and 100% scale. Turn off **Headers and footers** in the browser print dialog to remove the browser-added date, page title, URL and page number; websites cannot control that browser preference. The calendar's student, teacher and reading-total fields remain on the page.
+
 Use **Upload school mascot** to choose a PNG, JPEG or WebP up to 2 MB. The original image appears on both sides of the heading immediately for review. Adjust its size with the slider; its proportions are preserved. **Mirror the right mascot** is enabled by default and can be switched off. Confirm to save the image and size in this browser, or cancel to restore the previously confirmed mascot. You can adjust or remove it later. Images stay in the browser and are not uploaded to a server.
 
 Run the date-placement tests with `node --test calendar.test.mjs`. There are no third-party dependencies, build steps, external services, or credentials.
