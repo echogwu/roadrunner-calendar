@@ -20,3 +20,12 @@ export function localTranslation(text, source, target) {
 export function eventOccursOn(event, day) {
   return day >= event.start && day <= event.end;
 }
+
+export function splitEventByWeeks(event, weeks) {
+  return weeks.flatMap((week, weekIndex) => {
+    const days=week.filter(Boolean);
+    const start=Math.max(event.start,days[0]);
+    const end=Math.min(event.end,days.at(-1));
+    return start<=end ? [{weekIndex,start,end}] : [];
+  });
+}

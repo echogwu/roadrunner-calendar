@@ -1,5 +1,5 @@
 import {calendarWeeks} from './calendar.mjs';
-import {eventOccursOn, languages, localTranslation} from './translation.mjs';
+import {eventOccursOn, languages, localTranslation, splitEventByWeeks} from './translation.mjs';
 
 const $ = id => document.getElementById(id);
 const fieldIds = ['event-en', 'event-es', 'event-zh'];
@@ -52,10 +52,29 @@ async function fillTranslations(sourceInput) {
 }
 
 function eventMarkup(events, day) {
-  return events.filter(event=>eventOccursOn(event,day)).map(event=>{
-    const marker=event.start===event.end?'':day===event.start?' →':day===event.end?' ←':' ↔';
-    return `<div class="event-note">${lines(event.texts)}<span class="range-marker">${marker}</span></div>`;
-  }).join('');
+  return events.filter(event=>event.start===event.end && eventOccursOn(event,day)).map(event=>`<div class="event-note">${lines(event.texts)}</div>`).join('');
+}
+
+function positionEventBars(events, weeks) {
+  const wrap=document.querySelector('.calendar-table-wrap'); const layer=document.querySelector('.event-bars');
+  if (!wrap || !layer) return;
+  layer.replaceChildren();
+  const wrapRect=wrap.getBoundingClientRect();
+  const occupied=weeks.map(()=>[]);
+  events.filter(event=>event.end>event.start).forEach(event=>{
+    splitEventByWeeks(event,weeks).forEach(segment=>{
+      const startCell=wrap.querySelector(`[data-day="${segment.start}"]`); const endCell=wrap.querySelector(`[data-day="${segment.end}"]`);
+      if (!startCell || !endCell) return;
+      let lane=0; while (occupied[segment.weekIndex][lane]>=segment.start) lane++;
+      occupied[segment.weekIndex][lane]=segment.end;
+      const startRect=startCell.getBoundingClientRect(); const endRect=endCell.getBoundingClientRect();
+      const bar=document.createElement('div'); bar.className='event-bar';
+      bar.style.left=`${startRect.left-wrapRect.left+8}px`; bar.style.width=`${endRect.right-startRect.left-16}px`;
+      bar.style.top=`${startRect.top-wrapRect.top+startRect.height*.43+lane*35}px`;
+      bar.innerHTML=`<span class="bar-line"></span><div class="event-bar-label">${lines(event.texts)}</div><span class="bar-line bar-line-end">➜</span>`;
+      layer.append(bar);
+    });
+  });
 }
 
 function render(){
@@ -64,9 +83,10 @@ function render(){
  $('event-start').max=lastDay; $('event-end').max=lastDay;
  $('calendar').className=state.design;
  $('design-description').textContent=state.design==='classic'?'Original structure: Sunday-first grid, goals on the right, and name fields below. Three languages are stacked within each section.':'A small layout shift: reading goals sit below the full-width grid, with one column per grade group and more writing space.';
- $('calendar').innerHTML=`<div class="paper-heading"><div class="bird" aria-hidden="true">🐦</div><div>${lines([`${monthNames[state.month]} ${state.year} Roadrunner Reading Calendar`,`Calendario de lectura de Roadrunner de ${es} de ${state.year}`,`${state.year}年${state.month+1}月 Roadrunner 阅读日历`])}</div><div class="bird" aria-hidden="true">🐦</div></div><div class="calendar-body"><table><thead><tr>${weekdays.map(d=>`<th scope="col">${lines(d)}</th>`).join('')}</tr></thead><tbody>${weeks.map(w=>`<tr>${w.map(day=>`<td class="${day?'':'empty'}">${day?`<span class="date">${day}</span><div class="day-note">${eventMarkup(events,day)}</div>`:''}</td>`).join('')}</tr>`).join('')}</tbody></table><section class="goals"><h2>${lines(['Reading minutes goal','Objetivo de minutos de lectura','阅读时长目标'], ' | ')}</h2><div class="goal-groups">${grades.map((g,i)=>`<div class="goal">${lines(g)}<strong>${state.goals[i]} <small>min / minutos / 分钟</small></strong></div>`).join('')}</div></section></div><footer class="paper-footer"><div>${lines(['Total minutes read','Minutos totales leídos','阅读总分钟数'], ' | ')}<span class="blank"></span></div><div>${lines(['Teacher name','Nombre del maestro/a','教师姓名'], ' | ')}<span class="blank"></span></div><div>${lines(['Student name','Nombre del estudiante','学生姓名'], ' | ')}<span class="blank"></span></div></footer>`;
+ $('calendar').innerHTML=`<div class="paper-heading"><div class="bird" aria-hidden="true">🐦</div><div>${lines([`${monthNames[state.month]} ${state.year} Roadrunner Reading Calendar`,`Calendario de lectura de Roadrunner de ${es} de ${state.year}`,`${state.year}年${state.month+1}月 Roadrunner 阅读日历`])}</div><div class="bird" aria-hidden="true">🐦</div></div><div class="calendar-body"><div class="calendar-table-wrap"><table><thead><tr>${weekdays.map(d=>`<th scope="col">${lines(d)}</th>`).join('')}</tr></thead><tbody>${weeks.map(w=>`<tr>${w.map(day=>`<td class="${day?'':'empty'}"${day?` data-day="${day}"`:''}>${day?`<span class="date">${day}</span><div class="day-note">${eventMarkup(events,day)}</div>`:''}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="event-bars" aria-hidden="true"></div></div><section class="goals"><h2>${lines(['Reading minutes goal','Objetivo de minutos de lectura','阅读时长目标'], ' | ')}</h2><div class="goal-groups">${grades.map((g,i)=>`<div class="goal">${lines(g)}<strong>${state.goals[i]} <small>min / minutos / 分钟</small></strong></div>`).join('')}</div></section></div><footer class="paper-footer"><div>${lines(['Total minutes read','Minutos totales leídos','阅读总分钟数'], ' | ')}<span class="blank"></span></div><div>${lines(['Teacher name','Nombre del maestro/a','教师姓名'], ' | ')}<span class="blank"></span></div><div>${lines(['Student name','Nombre del estudiante','学生姓名'], ' | ')}<span class="blank"></span></div></footer>`;
  $('event-list').innerHTML=events.slice().sort((a,b)=>a.start-b.start).map(event=>`<div class="event-item"><span><b>${event.start}${event.end!==event.start?`–${event.end}`:''}</b> ${escape(event.texts.find(Boolean)||'')}</span><button type="button" data-remove="${escape(event.id)}" aria-label="Remove note for days ${event.start} to ${event.end}">×</button></div>`).join('');
  save();
+ requestAnimationFrame(()=>positionEventBars(events,weeks));
 }
 
 $('month').innerHTML=monthNames.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
@@ -92,4 +112,6 @@ $('event-form').addEventListener('submit',async e=>{
 });
 $('event-list').addEventListener('click',e=>{const button=e.target.closest('[data-remove]');if(button){state.events[currentKey()]=monthEvents().filter(event=>event.id!==button.dataset.remove);render();}});
 $('print').addEventListener('click',()=>window.print());
+window.addEventListener('resize',()=>positionEventBars(monthEvents(),calendarWeeks(state.year,state.month)));
+window.addEventListener('beforeprint',()=>positionEventBars(monthEvents(),calendarWeeks(state.year,state.month)));
 render();
