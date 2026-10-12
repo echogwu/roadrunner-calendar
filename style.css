@@ -2,6 +2,7 @@
 
 .goals h2 span{display:inline}.roomy .goals h2{display:block}
 .print-tip{margin:0 0 20px;font-size:12px}
+.google-translator-button{display:block;padding:13px 20px;border-radius:6px;background:#254c3f;color:white;text-decoration:none;text-align:center;font-size:14px;font-weight:700}.google-translator-button:hover{background:#3d6857}.google-translator-button:focus-visible{outline:2px solid #254c3f;outline-offset:3px}
 @page{size:letter landscape;margin:0}
 @media print{
  html,body{margin:0;padding:0}

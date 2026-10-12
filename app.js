@@ -143,6 +143,14 @@ const translateButton=document.createElement('button');
 $('event-form').previousElementSibling.textContent='Choose one day or a date range. Enter a note in any language; translations fill automatically after a short pause. You can edit them manually or use Translate to retry.';
 translateButton.type='button'; translateButton.id='translate-note'; translateButton.textContent='Translate';
 $('translation-status').before(translateButton);
+const googleTranslatorLink = document.createElement('a');
+googleTranslatorLink.href = 'https://translate.google.com/?sl=auto&tl=zh-CN&op=translate';
+googleTranslatorLink.target = '_blank';
+googleTranslatorLink.rel = 'noopener noreferrer';
+googleTranslatorLink.className = 'google-translator-button';
+googleTranslatorLink.textContent = 'Use Google Translator';
+googleTranslatorLink.setAttribute('aria-label', 'Use Google Translator (opens in a new tab)');
+translateButton.after(googleTranslatorLink);
 translateButton.addEventListener('click',async()=>{
   clearTimeout(translationTimer);
   const source=lastNoteSource?.value.trim()?lastNoteSource:fieldIds.map(id=>$(id)).find(input=>input.value.trim());
