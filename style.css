@@ -6,7 +6,7 @@
 .day-note{position:absolute;inset:24px 6px 6px;margin:0;display:flex;align-items:center;justify-content:center;overflow:hidden}.notes-content{width:100%;line-height:1.3}
 .calendar-grid{display:grid;grid-template-rows:auto 1fr;border-top:1px solid #777;border-left:1px solid #777;height:100%}.calendar-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));min-height:0}.calendar-weeks{display:grid;grid-template-rows:repeat(var(--weeks),minmax(92px,1fr));min-height:0}.calendar-cell,.calendar-day-heading{min-width:0;min-height:0;border-right:1px solid #777;border-bottom:1px solid #777;position:relative;padding:6px}.calendar-day-heading{background:#eee;text-align:center;text-transform:uppercase;padding:8px 2px}.calendar-day-heading span{display:block;font-size:11px;line-height:1.7}.calendar-day-heading span:first-child{font-size:12px}
 @media print{.calendar-grid{grid-template-rows:18mm minmax(0,1fr)}.calendar-weekdays .calendar-week{height:100%}.calendar-weeks{grid-template-rows:repeat(var(--weeks),minmax(0,1fr))}.calendar-day-heading{print-color-adjust:exact}.calendar-cell.empty{background:transparent}}
-.event-bars{overflow:hidden}.event-bar .event-bar-label{flex:0 1 auto;max-width:calc(100% - 56px);overflow-wrap:anywhere;line-height:1.4}.event-bar{overflow:hidden}
+.event-bars{overflow:hidden;display:grid;grid-template-rows:repeat(var(--weeks),minmax(0,1fr))}.event-week-layer{position:relative;min-height:0}.event-bar .event-bar-label{flex:0 1 auto;max-width:calc(100% - 56px);overflow-wrap:anywhere;line-height:1.4;background:white;print-color-adjust:exact}.event-bar{overflow:hidden}
 .event-bar .bar-line{height:0;background:none;border-top:4px solid #111}.event-bar .bar-arrow::before{height:0;background:none;border-top:4px solid #111}
 .google-translator-button{display:block;padding:13px 20px;border-radius:6px;background:#254c3f;color:white;text-decoration:none;text-align:center;font-size:14px;font-weight:700}.google-translator-button:hover{background:#3d6857}.google-translator-button:focus-visible{outline:2px solid #254c3f;outline-offset:3px}
 @page{size:letter landscape;margin:0}
@@ -30,7 +30,7 @@
  .calendar-table-wrap tbody{display:grid;grid-template-rows:repeat(var(--weeks),minmax(0,1fr))}
  .calendar-table-wrap tbody tr{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));min-height:0}
  .calendar-table-wrap th,.calendar-table-wrap td{min-width:0;min-height:0}
- .calendar-table-wrap .event-bar{top:calc(18mm + (100% - 18mm)*var(--week-center))!important}
+ .calendar-table-wrap .event-bars{top:18mm!important}
  #calendar td{height:auto}
  .paper-footer{flex:none;margin:0;gap:3mm 6mm}
  .goals{overflow:hidden}

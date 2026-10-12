@@ -132,7 +132,10 @@ function positionEventBars(events, weeks) {
   const wrap=document.querySelector('.calendar-table-wrap'); const layer=document.querySelector('.event-bars');
   if (!wrap || !layer) return;
   layer.replaceChildren();
-  const wrapRect=wrap.getBoundingClientRect();
+  layer.style.top=`${wrap.querySelector('.calendar-weekdays').getBoundingClientRect().height}px`;
+  const rowLayers=weeks.map(()=>{
+    const row=document.createElement('div'); row.className='event-week-layer'; layer.append(row); return row;
+  });
   const occupied=weeks.map(()=>[]);
   events.filter(event=>event.end>event.start).forEach(event=>{
     splitEventByWeeks(event,weeks).forEach(segment=>{
@@ -146,12 +149,11 @@ function positionEventBars(events, weeks) {
       const span=segment.end-segment.start+1;
       bar.style.left=`calc(${column * 100 / 7}% + 8px)`;
       bar.style.width=`calc(${span * 100 / 7}% - 16px)`;
-      bar.style.top=`${(startRect.top-wrapRect.top+startRect.height*.5)/wrapRect.height*100}%`;
-      bar.style.setProperty('--week-center',(segment.weekIndex+.5)/weeks.length);
+      bar.style.top='50%';
       bar.style.setProperty('--lane-offset',`${lane*35}px`);
       bar.style.transform=`translateY(calc(-50% + ${lane*35}px))`;
       bar.innerHTML=`<span class="bar-line"></span><div class="event-bar-label">${lines(event.texts)}</div><span class="bar-arrow" aria-hidden="true"></span>`;
-      layer.append(bar);
+      rowLayers[segment.weekIndex].append(bar);
       const label = bar.querySelector('.event-bar-label');
       fitText(label, label.clientWidth, Math.max(1, startRect.height - 30), 16);
     });
