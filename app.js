@@ -12,6 +12,32 @@ try {const saved=JSON.parse(localStorage.getItem('roadrunner-calendar')); if(sav
 const escape = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lines = (texts, separator = '') => texts.map((text,i)=>`<span lang="${['en','es','zh-Hans'][i]}">${escape(text)}</span>`).join(separator);
 const currentKey = () => `${state.year}-${state.month}`;
+let mascotDraft = null;
+let uploadVersion = 0;
+function mascotControls() {
+  $('mascot-review').hidden = !mascotDraft;
+  $('adjust-mascot').hidden = !state.mascot || !!mascotDraft;
+  $('remove-mascot').hidden = !state.mascot || !!mascotDraft;
+  if (mascotDraft) {
+    $('mascot-size').value = mascotDraft.size;
+    $('mascot-size-value').value = `${mascotDraft.size}%`;
+    $('mascot-mirror').checked = mascotDraft.mirror;
+  }
+}
+function renderMascot() {
+  const mascot = mascotDraft || state.mascot;
+  document.querySelectorAll('.paper-heading .bird').forEach((container, index) => {
+    container.replaceChildren();
+    container.style.flex = mascot ? `0 0 ${mascot.size}%` : '';
+    if (!mascot) return;
+    const img = document.createElement('img');
+    img.src = mascot.src;
+    img.alt = '';
+    img.className = index === 1 && mascot.mirror ? 'mascot mirrored' : 'mascot';
+    container.append(img);
+  });
+  mascotControls();
+}
 function save(){try{localStorage.setItem('roadrunner-calendar',JSON.stringify(state));}catch{$('save-status').textContent='Browser storage is unavailable. Keep this tab open to retain your settings.';}}
 
 function monthEvents() {
@@ -85,6 +111,7 @@ function render(){
  $('design-description').textContent=state.design==='classic'?'Original structure: Sunday-first grid, goals on the right, and name fields below. Three languages are stacked within each section.':'A small layout shift: reading goals sit below the full-width grid, with one column per grade group and more writing space.';
  $('calendar').innerHTML=`<div class="paper-heading"><div class="bird" aria-hidden="true">🐦</div><div>${lines([`${monthNames[state.month]} ${state.year} Roadrunner Reading Calendar`,`Calendario de lectura de Roadrunner de ${es} de ${state.year}`,`${state.year}年${state.month+1}月 Roadrunner 阅读日历`])}</div><div class="bird" aria-hidden="true">🐦</div></div><div class="calendar-body"><div class="calendar-table-wrap"><table><thead><tr>${weekdays.map(d=>`<th scope="col">${lines(d)}</th>`).join('')}</tr></thead><tbody>${weeks.map(w=>`<tr>${w.map(day=>`<td class="${day?'':'empty'}"${day?` data-day="${day}"`:''}>${day?`<span class="date">${day}</span><div class="day-note">${eventMarkup(events,day)}</div>`:''}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="event-bars" aria-hidden="true"></div></div><section class="goals"><h2>${lines(['Reading minutes goal','Objetivo de minutos de lectura','阅读时长目标'], ' | ')}</h2><div class="goal-groups">${grades.map((g,i)=>`<div class="goal">${lines(g)}<strong>${state.goals[i]} <small>min / minutos / 分钟</small></strong></div>`).join('')}</div></section></div><footer class="paper-footer"><div>${lines(['Total minutes read','Minutos totales leídos','阅读总分钟数'], ' | ')}<span class="blank"></span></div><div>${lines(['Teacher name','Nombre del maestro/a','教师姓名'], ' | ')}<span class="blank"></span></div><div>${lines(['Student name','Nombre del estudiante','学生姓名'], ' | ')}<span class="blank"></span></div></footer>`;
  $('event-list').innerHTML=events.slice().sort((a,b)=>a.start-b.start).map(event=>`<div class="event-item"><span><b>${event.start}${event.end!==event.start?`–${event.end}`:''}</b> ${escape(event.texts.find(Boolean)||'')}</span><button type="button" data-remove="${escape(event.id)}" aria-label="Remove note for days ${event.start} to ${event.end}">×</button></div>`).join('');
+ renderMascot();
  save();
  requestAnimationFrame(()=>positionEventBars(events,weeks));
 }
@@ -112,6 +139,51 @@ $('event-form').addEventListener('submit',async e=>{
 });
 $('event-list').addEventListener('click',e=>{const button=e.target.closest('[data-remove]');if(button){state.events[currentKey()]=monthEvents().filter(event=>event.id!==button.dataset.remove);render();}});
 $('print').addEventListener('click',()=>window.print());
+$('upload-mascot').addEventListener('click', () => $('mascot-file').click());
+$('mascot-file').addEventListener('change', async () => {
+  const version = ++uploadVersion;
+  const file = $('mascot-file').files[0];
+  $('mascot-file').value = '';
+  if (!file) return;
+  if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+    $('mascot-status').textContent = 'Choose a PNG, JPEG or WebP up to 2 MB.';
+    return;
+  }
+  try {
+    const src = await new Promise((resolve, reject) => {
+      const reader = new FileReader(); reader.onload = () => resolve(reader.result);
+      reader.onerror = reject; reader.readAsDataURL(file);
+    });
+    const img = new Image(); img.src = src; await img.decode();
+    if (version !== uploadVersion) return;
+    mascotDraft = {src, size: state.mascot?.size || 10, mirror: state.mascot?.mirror ?? true};
+    $('mascot-status').textContent = 'Preview only: adjust the size on the calendar, then confirm or cancel. Image proportions are preserved.';
+    render();
+  } catch { $('mascot-status').textContent = 'This image could not be opened. Please choose another file.'; }
+});
+$('mascot-size').addEventListener('input', () => {
+  if (!mascotDraft) return;
+  mascotDraft.size = Number($('mascot-size').value); render();
+});
+$('mascot-mirror').addEventListener('change', () => {
+  if (!mascotDraft) return;
+  mascotDraft.mirror = $('mascot-mirror').checked; render();
+});
+$('confirm-mascot').addEventListener('click', () => {
+  if (!mascotDraft) return;
+  state.mascot = {...mascotDraft}; mascotDraft = null;
+  $('mascot-status').textContent = 'Mascot confirmed. It will appear on your printed calendar.';
+  render();
+});
+$('cancel-mascot').addEventListener('click', () => {
+  ++uploadVersion; mascotDraft = null; $('mascot-status').textContent = 'Preview canceled.'; render();
+});
+$('adjust-mascot').addEventListener('click', () => {
+  mascotDraft = {...state.mascot}; $('mascot-status').textContent = 'Adjust the preview, then confirm or cancel.'; render();
+});
+$('remove-mascot').addEventListener('click', () => {
+  delete state.mascot; $('mascot-status').textContent = 'Mascot removed. Upload an image to add it again.'; render();
+});
 window.addEventListener('resize',()=>positionEventBars(monthEvents(),calendarWeeks(state.year,state.month)));
 window.addEventListener('beforeprint',()=>positionEventBars(monthEvents(),calendarWeeks(state.year,state.month)));
 render();
