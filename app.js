@@ -2,7 +2,7 @@ import {calendarWeeks} from './calendar.mjs';
 const $ = id => document.getElementById(id);
 const monthNames = Array.from({length:12}, (_,i) => new Intl.DateTimeFormat('en',{month:'long',timeZone:'UTC'}).format(new Date(Date.UTC(2026,i,1))));
 const weekdays = [['Sunday','Domingo','星期日'],['Monday','Lunes','星期一'],['Tuesday','Martes','星期二'],['Wednesday','Miércoles','星期三'],['Thursday','Jueves','星期四'],['Friday','Viernes','星期五'],['Saturday','Sábado','星期六']];
-const grades = [['TK–1st Grade','TK–1er grado','TK至一年级'],['2nd–3rd Grade','2.º–3.er grado','二至三年级'],['4th–5th Grade','4.º–5.º grado','四至五年级']];
+const grades = [['TK–1st Grade','TK–1er grado','TK至一年级'],['2nd–3rd Grade','2do - 3er Grado','二至三年级'],['4th–5th Grade','4to - 5to Grado','四至五年级']];
 let state = {month:10,year:2026,design:'classic',goals:[250,450,650],events:{}};
 try {const saved=JSON.parse(localStorage.getItem('roadrunner-calendar')); if(saved && Number.isInteger(saved.month) && saved.month>=0 && saved.month<12 && Number.isInteger(saved.year) && saved.year>=1900 && saved.year<=2100 && ['classic','roomy'].includes(saved.design) && Array.isArray(saved.goals) && saved.goals.length===3 && saved.goals.every(v=>Number.isInteger(v)&&v>=0) && saved.events && typeof saved.events==='object') state=saved;} catch {}
 const escape = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
