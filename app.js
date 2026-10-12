@@ -123,8 +123,41 @@ function fitText(element, width, height, maximum = 16) {
 function fitDayNotes() {
   document.querySelectorAll('.day-note').forEach(note => {
     const content = note.firstElementChild;
-    if (!content) return;
-    fitText(content, note.clientWidth, note.clientHeight);
+    if (!content || content.querySelector('svg')) return;
+    const canvas=document.createElement('canvas'); const context=canvas.getContext('2d');
+    const width=130, fontSize=14, lineHeight=18;
+    const rows=[];
+    content.querySelectorAll('span[lang]').forEach(span=>{
+      const bold=span===span.parentElement.firstElementChild;
+      context.font=`${bold?'700':'400'} ${fontSize}px Arial`;
+      let line='';
+      const words=span.textContent.match(/\S+\s*|\s+/gu)||[];
+      for(const word of words){
+        if(context.measureText(line+word).width<=width-8){line+=word;continue;}
+        if(line.trim())rows.push({text:line.trim(),bold,lang:span.lang});
+        line='';
+        for(const character of Array.from(word)){
+          if(context.measureText(line+character).width>width-8&&line){rows.push({text:line.trim(),bold,lang:span.lang});line='';}
+          line+=character;
+        }
+      }
+      if(line.trim())rows.push({text:line.trim(),bold,lang:span.lang});
+    });
+    if(!rows.length)return;
+    const ns='http://www.w3.org/2000/svg'; const svg=document.createElementNS(ns,'svg');
+    const height=rows.length*lineHeight+6;
+    svg.setAttribute('viewBox',`0 0 ${width} ${height}`);
+    svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+    svg.setAttribute('role','img'); svg.setAttribute('aria-label',rows.map(r=>r.text).join(' '));
+    svg.style.maxHeight=`${height*16/fontSize}px`;
+    rows.forEach((row,i)=>{
+      const text=document.createElementNS(ns,'text');
+      text.setAttribute('x',width/2);text.setAttribute('y',i*lineHeight+fontSize+3);
+      text.setAttribute('text-anchor','middle');text.setAttribute('font-family','Arial, sans-serif');
+      text.setAttribute('font-size',fontSize);text.setAttribute('font-weight',row.bold?'700':'400');
+      text.setAttribute('lang',row.lang);text.textContent=row.text;svg.append(text);
+    });
+    content.replaceChildren(svg);
   });
 }
 let calendarResizeObserver;
