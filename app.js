@@ -22,6 +22,10 @@ function mascotControls() {
     $('mascot-size').value = mascotDraft.size;
     $('mascot-size-value').value = `${mascotDraft.size}%`;
     $('mascot-mirror').checked = mascotDraft.mirror;
+    for (const axis of ['x','y']) {
+      $( `mascot-${axis}`).value = mascotDraft[axis] || 0;
+      $(`mascot-${axis}-value`).value = `${mascotDraft[axis] || 0} mm`;
+    }
   }
 }
 function renderMascot() {
@@ -29,6 +33,7 @@ function renderMascot() {
   document.querySelectorAll('.paper-heading .bird').forEach((container, index) => {
     container.replaceChildren();
     container.style.flex = mascot ? `0 0 ${mascot.size}%` : '';
+    container.style.transform = mascot ? `translate(${(mascot.x || 0) * (index === 0 ? 1 : -1)}mm, ${mascot.y || 0}mm)` : '';
     if (!mascot) return;
     const img = document.createElement('img');
     img.src = mascot.src;
@@ -157,7 +162,7 @@ $('mascot-file').addEventListener('change', async () => {
     });
     const img = new Image(); img.src = src; await img.decode();
     if (version !== uploadVersion) return;
-    mascotDraft = {src, size: state.mascot?.size || 10, mirror: state.mascot?.mirror ?? true};
+    mascotDraft = {src, size: state.mascot?.size || 10, mirror: state.mascot?.mirror ?? true, x: state.mascot?.x || 0, y: state.mascot?.y || 0};
     $('mascot-status').textContent = 'Preview only: adjust the size on the calendar, then confirm or cancel. Image proportions are preserved.';
     render();
   } catch { $('mascot-status').textContent = 'This image could not be opened. Please choose another file.'; }
@@ -170,6 +175,12 @@ $('mascot-mirror').addEventListener('change', () => {
   if (!mascotDraft) return;
   mascotDraft.mirror = $('mascot-mirror').checked; render();
 });
+for (const axis of ['x','y']) {
+  $(`mascot-${axis}`).addEventListener('input', () => {
+    if (!mascotDraft) return;
+    mascotDraft[axis] = Number($(`mascot-${axis}`).value); render();
+  });
+}
 $('confirm-mascot').addEventListener('click', () => {
   if (!mascotDraft) return;
   state.mascot = {...mascotDraft}; mascotDraft = null;
