@@ -111,7 +111,10 @@ function positionEventBars(events, weeks) {
       occupied[segment.weekIndex][lane]=segment.end;
       const startRect=startCell.getBoundingClientRect(); const endRect=endCell.getBoundingClientRect();
       const bar=document.createElement('div'); bar.className='event-bar';
-      bar.style.left=`${startRect.left-wrapRect.left+8}px`; bar.style.width=`${endRect.right-startRect.left-16}px`;
+      const column=weeks[segment.weekIndex].indexOf(segment.start);
+      const span=segment.end-segment.start+1;
+      bar.style.left=`calc(${column * 100 / 7}% + 8px)`;
+      bar.style.width=`calc(${span * 100 / 7}% - 16px)`;
       bar.style.top=`${startRect.top-wrapRect.top+startRect.height*.43+lane*35}px`;
       bar.innerHTML=`<span class="bar-line"></span><div class="event-bar-label">${lines(event.texts)}</div><span class="bar-arrow" aria-hidden="true"></span>`;
       layer.append(bar);
