@@ -71,7 +71,7 @@ function positionEventBars(events, weeks) {
       const bar=document.createElement('div'); bar.className='event-bar';
       bar.style.left=`${startRect.left-wrapRect.left+8}px`; bar.style.width=`${endRect.right-startRect.left-16}px`;
       bar.style.top=`${startRect.top-wrapRect.top+startRect.height*.43+lane*35}px`;
-      bar.innerHTML=`<span class="bar-line"></span><div class="event-bar-label">${lines(event.texts)}</div><span class="bar-line bar-line-end">➜</span>`;
+      bar.innerHTML=`<span class="bar-line"></span><div class="event-bar-label">${lines(event.texts)}</div><span class="bar-arrow" aria-hidden="true"></span>`;
       layer.append(bar);
     });
   });
