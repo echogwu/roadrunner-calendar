@@ -14,7 +14,9 @@
  .calendar-body{flex:1;min-height:0;grid-template-rows:minmax(0,1fr)}
  .roomy .calendar-body{grid-template-rows:minmax(0,1fr) auto;gap:3mm}
  .calendar-table-wrap{height:100%;min-height:0}
- .calendar-table-wrap table{height:100%}
+ .calendar-table-wrap table{height:100%;border-collapse:separate;border-spacing:0;border:0.75pt solid #777;border-right:0;border-bottom:0;empty-cells:show}
+ .calendar-table-wrap th,.calendar-table-wrap td{border:0;border-right:0.75pt solid #777;border-bottom:0.75pt solid #777}
+ .calendar-table-wrap td.empty{background:transparent}
  .calendar-table-wrap thead{height:18mm}
  .calendar-table-wrap tbody tr{height:calc((100% - 18mm)/var(--weeks))}
  #calendar td{height:auto}
