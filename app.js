@@ -94,9 +94,40 @@ async function fillTranslations(sourceInput) {
 }
 
 function eventMarkup(events, day) {
-  return events.filter(event=>event.start===event.end && eventOccursOn(event,day)).map(event=>`<div class="event-note">${lines(event.texts)}</div>`).join('');
+  return `<div class="notes-content">${events.filter(event=>event.start===event.end && eventOccursOn(event,day)).map(event=>`<div class="event-note">${lines(event.texts)}</div>`).join('')}</div>`;
+}
+function stabilizeCalendarGrid() {
+  const table=document.querySelector('.calendar-table-wrap table');
+  const mapping={TABLE:['calendar-grid','table'],THEAD:['calendar-weekdays','rowgroup'],TBODY:['calendar-weeks','rowgroup'],TR:['calendar-week','row'],TH:['calendar-day-heading','columnheader'],TD:['calendar-cell','cell']};
+  function convert(node) {
+    if (!mapping[node.nodeName]) return node.cloneNode(true);
+    const [name,role]=mapping[node.nodeName]; const replacement=document.createElement('div');
+    for (const attr of node.attributes) replacement.setAttribute(attr.name,attr.value);
+    replacement.classList.add(name); replacement.setAttribute('role',role);
+    for (const child of node.childNodes) replacement.append(convert(child));
+    return replacement;
+  }
+  table.replaceWith(convert(table));
 }
 
+function fitText(element, width, height, maximum = 16) {
+  let low = 1, high = maximum;
+  for (let i = 0; i < 12; i++) {
+    const size = (low + high) / 2;
+    element.style.fontSize = `${size}px`;
+    if (element.scrollWidth <= width + 1 && element.scrollHeight <= height + 1) low = size;
+    else high = size;
+  }
+  element.style.fontSize = `${low}px`;
+}
+function fitDayNotes() {
+  document.querySelectorAll('.day-note').forEach(note => {
+    const content = note.firstElementChild;
+    if (!content) return;
+    fitText(content, note.clientWidth, note.clientHeight);
+  });
+}
+let calendarResizeObserver;
 function positionEventBars(events, weeks) {
   const wrap=document.querySelector('.calendar-table-wrap'); const layer=document.querySelector('.event-bars');
   if (!wrap || !layer) return;
@@ -121,8 +152,11 @@ function positionEventBars(events, weeks) {
       bar.style.transform=`translateY(calc(-50% + ${lane*35}px))`;
       bar.innerHTML=`<span class="bar-line"></span><div class="event-bar-label">${lines(event.texts)}</div><span class="bar-arrow" aria-hidden="true"></span>`;
       layer.append(bar);
+      const label = bar.querySelector('.event-bar-label');
+      fitText(label, label.clientWidth, Math.max(1, startRect.height - 30), 16);
     });
   });
+  fitDayNotes();
 }
 
 function render(){
@@ -134,8 +168,12 @@ function render(){
  $('design-description').textContent=state.design==='classic'?'Original structure: Sunday-first grid, goals on the right, and name fields below. Three languages are stacked within each section.':'A small layout shift: reading goals sit below the full-width grid, with one column per grade group and more writing space.';
  $('calendar').innerHTML=`<div class="paper-heading"><div class="bird" aria-hidden="true">🐦</div><div>${lines([`${monthNames[state.month]} ${state.year} Roadrunner Reading Calendar`,`Calendario de lectura de Roadrunner de ${es} de ${state.year}`,`${state.year}年${state.month+1}月 Roadrunner 阅读日历`])}</div><div class="bird" aria-hidden="true">🐦</div></div><div class="calendar-body"><div class="calendar-table-wrap"><table><thead><tr>${weekdays.map(d=>`<th scope="col">${lines(d)}</th>`).join('')}</tr></thead><tbody>${weeks.map(w=>`<tr>${w.map(day=>`<td class="${day?'':'empty'}"${day?` data-day="${day}"`:''}>${day?`<span class="date">${day}</span><div class="day-note">${eventMarkup(events,day)}</div>`:''}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="event-bars" aria-hidden="true"></div></div><section class="goals"><h2>${lines(['Reading minutes goal','Objetivo de minutos de lectura','阅读时长目标'], ' | ')}</h2><div class="goal-groups">${grades.map((g,i)=>`<div class="goal">${lines(g)}<strong>${state.goals[i]} <small>min / minutos / 分钟</small></strong></div>`).join('')}</div></section></div><footer class="paper-footer"><div>${lines(['Total minutes read','Minutos totales leídos','阅读总分钟数'], ' | ')}<span class="blank"></span></div><div>${lines(['Teacher name','Nombre del maestro/a','教师姓名'], ' | ')}<span class="blank"></span></div><div>${lines(['Student name','Nombre del estudiante','学生姓名'], ' | ')}<span class="blank"></span></div></footer>`;
  $('event-list').innerHTML=events.slice().sort((a,b)=>a.start-b.start).map(event=>`<div class="event-item"><span><b>${event.start}${event.end!==event.start?`–${event.end}`:''}</b> ${escape(event.texts.find(Boolean)||'')}</span><button type="button" data-remove="${escape(event.id)}" aria-label="Remove note for days ${event.start} to ${event.end}">×</button></div>`).join('');
+ stabilizeCalendarGrid();
  renderMascot();
  save();
+ if (!calendarResizeObserver) calendarResizeObserver = new ResizeObserver(() => positionEventBars(monthEvents(), calendarWeeks(state.year,state.month)));
+ calendarResizeObserver.disconnect();
+ calendarResizeObserver.observe(document.querySelector('.calendar-table-wrap'));
  requestAnimationFrame(()=>positionEventBars(events,weeks));
 }
 
